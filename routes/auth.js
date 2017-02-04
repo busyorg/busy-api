@@ -2,6 +2,7 @@ const express = require('express');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const schema = require('../helpers/schema');
 const router = express.Router();
 
 router.get('/', passport.authenticate('jwt', { session: false }), function(req, res, next) {
@@ -15,16 +16,21 @@ router.get('/me', passport.authenticate('jwt', { session: false }), function(req
 router.get('/signup', function(req, res, next) {
   const email = req.query.email;
   const password = req.query.password;
-  // Check if email and password are well formed
   // Check if email not exist already
-  const hash = bcrypt.hashSync(password, 10);
-  const query = 'INSERT INTO users(email, password) values(${email}, ${hash})';
-  req.db.none(query, { email, hash })
-    .then(() => {
-      const token = jwt.sign({ email }, process.env.JWT_SECRET);
-      res.json({ token });
-    })
-    .catch(err => next(err));
+  req.validator.validate({ email, password }, schema.signup, (err, valid) => {
+    if (valid) {
+      const hash = bcrypt.hashSync(password, 10);
+      const query = 'INSERT INTO users(email, password) values(${email}, ${hash})';
+      req.db.none(query, { email, hash })
+        .then(() => {
+          const token = jwt.sign({ email }, process.env.JWT_SECRET);
+          res.json({ token });
+        })
+        .catch(err => next(err));
+    } else {
+      next(err);
+    }
+  });
 });
 
 router.get('/login', function(req, res, next) {

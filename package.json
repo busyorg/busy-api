@@ -20,6 +20,8 @@
     "passport-jwt": "^2.2.1",
     "pg-promise": "^5.5.6",
     "serve-favicon": "~2.3.2",
-    "steem": "steemit/steem-js#dev"
+    "steem": "steemit/steem-js#dev",
+    "validator": "^6.2.1",
+    "z-schema": "^3.18.2"
   }
 }
