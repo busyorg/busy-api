@@ -16,7 +16,7 @@ router.get('/me', passport.authenticate('jwt', { session: false }), function(req
 router.get('/signup', function(req, res, next) {
   const email = req.query.email;
   const password = req.query.password;
-  // Check if email not exist already
+  // TODO check if email exist already on the database
   req.validator.validate({ email, password }, schema.signup, (err, valid) => {
     if (valid) {
       const hash = bcrypt.hashSync(password, 10);
@@ -28,7 +28,7 @@ router.get('/signup', function(req, res, next) {
         })
         .catch(err => next(err));
     } else {
-      next(err);
+      res.status(400).json(req.validator.errorObject(err));
     }
   });
 });
@@ -36,14 +36,17 @@ router.get('/signup', function(req, res, next) {
 router.get('/login', function(req, res, next) {
   const email = req.query.email;
   const password = req.query.password;
+  // TODO check if email and password are not empty
   const query = 'SELECT * FROM users WHERE "email" = ${email} LIMIT 1';
   req.db.query(query, { email })
     .then(users => {
-      if (users[0] && bcrypt.compareSync(password, users[0].password)) {
+      if (!users[0]) {
+        res.status(400).json({ email: ['Email does not exist.'] });
+      } else if (!bcrypt.compareSync(password, users[0].password)) {
+        res.status(400).json({ password: ['Password does not match.'] });
+      } else {
         const token = jwt.sign({ email }, process.env.JWT_SECRET);
         res.json({ token });
-      } else {
-        res.json({ error: 'User not found.' });
       }
     })
     .catch(err => next(err));
