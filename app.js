@@ -12,7 +12,9 @@ const strategy = require('./helpers/strategy');
 const db = require('./helpers/db');
 const validator = require('./helpers/validator');
 
-const api = require('./routes/auth');
+const auth = require('./routes/auth');
+const accounts = require('./routes/accounts');
+const translate = require('./routes/translate');
 
 const app = express();
 
@@ -30,7 +32,9 @@ app.use((req,res,next) => {
   next();
 });
 
-app.use('/v1/auth', api);
+app.use('/v1/auth', auth);
+app.use('/v1/accounts', accounts);
+app.use('/v1/translate', translate);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
