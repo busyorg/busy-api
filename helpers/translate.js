@@ -37,6 +37,24 @@ const getMessages = (replies) => {
   return messages;
 };
 
+const getMissingMessages = (replies) => {
+  const messages = getMessages(replies);
+  const base = messages.en || {};
+  const missingMessages = {};
+  Object.keys(messages).forEach((key) => {
+    if (key !== 'en') {
+      missingMessages[key] = {};
+      Object.keys(base).forEach((k) => {
+        if (!messages[key][k]) {
+          missingMessages[key][k] = base[k];
+        }
+      });
+    }
+  });
+  return missingMessages;
+};
+
 module.exports = {
-  getMessages
+  getMessages,
+  getMissingMessages,
 };

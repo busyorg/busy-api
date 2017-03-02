@@ -17,4 +17,16 @@ router.get('/', function(req, res, next) {
   });
 });
 
+router.get('/missing', function(req, res, next) {
+  const parentPermlink = req.query.parentPermlink;
+  const author = req.query.author;
+  const permlink = req.query.permlink;
+  const locale = req.query.locale;
+  steem.api.getState(`/${parentPermlink}/@${author}/${permlink}`, (err, result) => {
+    let messages = translate.getMissingMessages(result.content);
+    messages = locale ? messages[locale] || {} : messages;
+    res.json(messages);
+  });
+});
+
 module.exports = router;
