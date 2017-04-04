@@ -10,6 +10,7 @@ const cors = require('cors');
 const passport = require('passport');
 const strategy = require('./helpers/strategy');
 const db = require('./helpers/db');
+const mail = require('./helpers/mail');
 
 const auth = require('./routes/auth');
 const accounts = require('./routes/accounts');
@@ -25,6 +26,7 @@ app.use(cors());
 
 app.use((req,res,next) => {
   req.db = db;
+  req.mail = mail;
   next();
 });
 
