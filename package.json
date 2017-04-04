@@ -1,6 +1,9 @@
 {
   "name": "busy-api",
   "version": "0.0.0",
+  "engines": {
+    "node": "7.7.1"
+  },
   "private": true,
   "scripts": {
     "start": "node ./bin/www"
@@ -21,7 +24,6 @@
     "pg-promise": "^5.5.6",
     "serve-favicon": "~2.3.2",
     "steem": "^0.4.8",
-    "validator": "^6.2.1",
-    "z-schema": "^3.18.2"
+    "validator": "^6.2.1"
   }
 }
