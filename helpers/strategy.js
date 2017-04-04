@@ -13,8 +13,8 @@ const strategy = new Strategy(params, (payload, done) => {
     .then(users => {
       if (users[0]) {
         const user = {
-          id: users[0].id,
           email: users[0].email,
+          email_verified: users[0].email_verified,
         };
         return done(null, user);
       }
