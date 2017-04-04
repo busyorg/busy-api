@@ -36,7 +36,7 @@ router.get('/signup', async function(req, res, next) {
     const token = jwt.sign({ email }, process.env.JWT_SECRET);
     res.json({ token });
 
-    req.mail.send('confirm_email', {
+    req.mail.send(email, 'confirm_email', {
       url: `https://busy.org/confirm?email=${email}&code=${secret}`
     }, (err, result) => {
       console.log(err, result);

@@ -8,7 +8,6 @@ const mail = {};
 const templates = {
   confirm_email: {
     from: 'Busy <no-reply@busy.org>',
-    to: 'fabien@bonustrack.co',
     subject: 'Welcome to Busy!',
     text:
       'Thanks for signing up to Busy, we are excited to have you on board!\n' +
@@ -18,17 +17,18 @@ const templates = {
       'Cheers,\n' +
       'Busy',
   }
-}
+};
 
-mail.send = (template, params = {}, cb) => {
+mail.send = (to, template, params = {}, cb) => {
   const data = templates[template];
   Object.keys(params).map((key) => {
     data.text = data.text.replace('${' + key + '}', params[key]);
     data.subject = data.subject.replace('${' + key + '}', params[key]);
   });
+  data.to = to;
   mailgun.messages().send(data, (error, body) => {
     cb(error, body);
   });
-}
+};
 
 module.exports = mail;
