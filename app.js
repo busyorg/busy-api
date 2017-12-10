@@ -5,10 +5,13 @@ const http = require('http');
 const https = require('https');
 const cors = require('cors');
 const { createClient } = require('lightrpc');
+const bluebird = require('bluebird');
 const redis = require('./helpers/redis');
 const rpc = require('./routes/rpc');
 
 const client = createClient('https://api.steemit.com');
+bluebird.promisifyAll(client);
+
 http.globalAgent.maxSockets = Infinity;
 https.globalAgent.maxSockets = Infinity;
 
