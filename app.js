@@ -5,6 +5,7 @@ const http = require('http');
 const https = require('https');
 const cors = require('cors');
 const { createClient } = require('lightrpc');
+const redis = require('./helpers/redis');
 const rpc = require('./routes/rpc');
 
 const client = createClient('https://api.steemit.com');
@@ -19,6 +20,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(cors());
 app.use((req,res,next) => {
+  req.redis = redis;
   req.client = client;
   next();
 });
