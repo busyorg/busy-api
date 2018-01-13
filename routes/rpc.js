@@ -3,7 +3,15 @@ const router = express.Router();
 
 router.all('/rpc', async (req, res) => {
   const { method, params = [], id = 1 } = req.body;
-  const result = await req.client.sendAsync(params[1], params[2]);
+  let result = req.cache.get('steemd', [method, params]);
+  if (!result) {
+    try {
+      result = await req.client.sendAsync(method, params);
+      req.cache.set('steemd', [method, params], result);
+    } catch (err) {
+      console.log([method, params], err);
+    }
+  }
   res.json({
     jsonrpc: '2.0',
     id,
