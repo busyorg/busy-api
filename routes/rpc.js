@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 router.all('/rpc', async (req, res) => {
+  const start = Date.now();
   const { method, params = [], id = 1 } = req.body;
   let cache = true;
   let result = req.cache.get('steemd', [method, params]);
@@ -14,10 +15,12 @@ router.all('/rpc', async (req, res) => {
       console.log([method, params], err);
     }
   }
+  const responseTime = Date.now() - start;
   res.json({
     jsonrpc: '2.0',
     id,
     cache,
+    response_time: responseTime,
     method,
     result,
   });
