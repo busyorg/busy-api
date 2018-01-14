@@ -6,13 +6,10 @@ const https = require('https');
 const cors = require('cors');
 const { createClient } = require('lightrpc');
 const bluebird = require('bluebird');
-const Cache = require('./helpers/cache');
 const rpc = require('./routes/rpc');
 
 const client = createClient('https://api.steemit.com');
 bluebird.promisifyAll(client);
-
-const cache = new Cache();
 
 http.globalAgent.maxSockets = Infinity;
 https.globalAgent.maxSockets = Infinity;
@@ -25,7 +22,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(cors());
 app.use((req,res,next) => {
-  req.cache = cache;
   req.client = client;
   next();
 });
