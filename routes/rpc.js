@@ -13,7 +13,6 @@ router.all('/rpc', async (req, res) => {
     fromCache = false;
     try {
       result = await req.client.sendAsync(method, params);
-      cache.set('steemd', [method, params], result);
     } catch (err) {
       console.log([method, params], err);
     }
@@ -27,6 +26,9 @@ router.all('/rpc', async (req, res) => {
     method,
     result,
   });
+  if (!fromCache && result) {
+    cache.set('steemd', [method, params], result);
+  }
 });
 
 module.exports = router;
