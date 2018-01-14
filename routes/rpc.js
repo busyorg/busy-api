@@ -7,20 +7,20 @@ router.all('/rpc', async (req, res) => {
   let cache = true;
   let result = req.cache.get('steemd', [method, params]);
   if (!result) {
+    cache = false;
     try {
-      cache = false;
       result = await req.client.sendAsync(method, params);
       req.cache.set('steemd', [method, params], result);
     } catch (err) {
       console.log([method, params], err);
     }
   }
-  const responseTime = Date.now() - start;
+  const ms = Date.now() - start;
   res.json({
     jsonrpc: '2.0',
     id,
     cache,
-    response_time: responseTime,
+    ms,
     method,
     result,
   });
