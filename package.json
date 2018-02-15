@@ -4,20 +4,12 @@
   "engines": {
     "node": "7.7.1"
   },
-  "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./server.js"
   },
   "dependencies": {
-    "algoliasearch": "^3.24.9",
     "bluebird": "^3.5.1",
-    "body-parser": "^1.18.2",
-    "cors": "^2.8.4",
-    "debug": "^3.1.0",
-    "express": "^4.16.2",
-    "lightrpc": "0.0.1",
-    "lodash": "^4.17.4",
-    "morgan": "^1.9.0",
-    "redis": "^2.8.0"
+    "busyjs": "https://github.com/busyorg/busyjs#dev",
+    "express": "^4.16.2"
   }
 }
