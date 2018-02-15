@@ -10,12 +10,11 @@ const client = new Client(steemdWsUrl);
 
 wss.on('connection', (ws) => {
   console.log('Got connection from new peer');
-
   ws.on('message', (message) => {
     console.log('Message', message);
-
     const call = JSON.parse(message);
     client.call(call.method, call.params, (err, result) => {
+      console.log(err, result);
       ws.send(JSON.stringify({ id: call.id, result }));
     });
   });
