@@ -21,7 +21,7 @@ wss.on('connection', (ws) => {
         cache[key] = result;
       });
     } else {
-      ws.send(JSON.stringify({ id: call.id, result: cache[key] }));
+      ws.send(JSON.stringify({ id: call.id, cache: true, result: cache[key] }));
     }
   });
   ws.on('error', () => console.log('Error on connection with peer'));
