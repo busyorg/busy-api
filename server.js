@@ -14,7 +14,6 @@ wss.on('connection', (ws) => {
     console.log('Message', message);
     const call = JSON.parse(message);
     client.call(call.method, call.params, (err, result) => {
-      console.log(err, result);
       ws.send(JSON.stringify({ id: call.id, result }));
     });
   });
