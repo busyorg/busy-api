@@ -166,7 +166,7 @@ const catchup = (blockNumber) => {
 
 const start = () => {
   redis.getAsync('last_block_num').then((res) => {
-    let lastBlockNum = (res === null)? 19900000 : res;
+    let lastBlockNum = (res === null)? 19900000 : parseInt(res) + 1;
     catchup(lastBlockNum);
   }).catch(err => {
     console.log('Redis get last_block_num failed', err);
