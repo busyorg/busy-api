@@ -29,6 +29,7 @@ wss.on('connection', (ws) => {
     const key = new Buffer(JSON.stringify([call.method, call.params])).toString('base64');
     if (call.method === 'get_notifications' && call.params && call.params[0]) {
       redis.lrangeAsync(`notifications:${call.params[0]}`, 0, -1).then((res) => {
+        console.log('Send notifications', call.params[0]);
         ws.send(JSON.stringify({ id: call.id, cache: true, result: res }));
       }).catch(err => {
         console.log('Redis get_notifications failed', err);
