@@ -10,6 +10,10 @@
   "dependencies": {
     "bluebird": "^3.5.1",
     "busyjs": "https://github.com/busyorg/busyjs#dev",
-    "express": "^4.16.2"
+    "express": "^4.16.2",
+    "lightrpc": "0.0.5",
+    "lodash": "^4.17.5",
+    "redis": "^2.8.0",
+    "ws": "^4.0.0"
   }
 }
