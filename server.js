@@ -17,7 +17,7 @@ const client = new Client(steemdWsUrl);
 const cache = {};
 const useCache =  false;
 
-const limit = 99; // 3
+const limit = 50;
 
 /** Init websocket server */
 
@@ -51,8 +51,10 @@ wss.on('connection', (ws) => {
 });
 
 /** Stream the blockchain */
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const handleOperations = (ops) => {
+  const notifications = [];
   ops.forEach((op) => {
     const type = op.op[0];
     const params = op.op[1];
@@ -62,7 +64,6 @@ const handleOperations = (ops) => {
 
         /** Find replies */
         if (!isRootPost) {
-          console.log('Reply', params.parent_author, 'in', params.author, params.permlink);
           const notification = {
             type: 'reply',
             parent_permlink: params.parent_permlink,
@@ -70,7 +71,7 @@ const handleOperations = (ops) => {
             permlink: params.permlink,
             timestamp: Date.parse(op.timestamp) / 1000,
           };
-          handleNotification(params.parent_author, notification);
+          notifications.push([params.parent_author, notification]);
         }
 
         /** Find mentions */
@@ -83,7 +84,6 @@ const handleOperations = (ops) => {
           .filter(n => n), params.author);
         if (mentions.length) {
           mentions.forEach(mention => {
-            console.log('Mention', mention, 'in', params.author, params.permlink);
             const notification = {
               type: 'mention',
               is_root_post: isRootPost,
@@ -91,7 +91,7 @@ const handleOperations = (ops) => {
               permlink: params.permlink,
               timestamp: Date.parse(op.timestamp) / 1000,
             };
-            handleNotification(mention, notification);
+            notifications.push([mention, notification]);
           });
         }
         break;
@@ -107,13 +107,12 @@ const handleOperations = (ops) => {
           case 'follow': {
             /** Find follow */
             if (json[0] === 'follow' && json[1].follower && json[1].following && _.has(json, '[1].what[0]') && json[1].what[0] === 'blog') {
-              console.log('Follow', json[1].following, json[1].follower);
               const notification = {
                 type: 'follow',
                 follower: json[1].follower,
                 timestamp: Date.parse(op.timestamp) / 1000,
               };
-              handleNotification(json[1].following, notification);
+              notifications.push([json[1].following, notification]);
             }
             break;
           }
@@ -122,15 +121,31 @@ const handleOperations = (ops) => {
       }
     }
   });
-};
 
-const handleNotification = (to, notification) => {
-  redis.lpushAsync(`notifications:${to}`, JSON.stringify(notification)).then(() => {
-    redis.ltrimAsync(`notifications:${to}`, 0, limit).catch(err => {
-      console.log('Redis ltrim error', err);
+  /** Store notifications */
+  const operations = [];
+  notifications.forEach((notification) => {
+    operations.push([
+      'lpush',
+      `notifications:${notification[0]}`,
+      JSON.stringify(notification[1]),
+    ]);
+    operations.push([
+      'ltrim',
+      `notifications:${notification[0]}`,
+      0,
+      limit - 1,
+    ]);
+  });
+
+  return new Promise((resolve, reject) => {
+    redis.multi(operations).execAsync().then(() => {
+      console.log(`- Notification: +${notifications.length}`);
+      resolve();
+    }).catch(err => {
+      console.error('Redis store notification multi failed', err);
+      reject(err);
     });
-  }).catch(err => {
-    console.log('Redis lpush error', err);
   });
 };
 
@@ -143,20 +158,26 @@ const catchup = (blockNumber) => {
           console.log('Block exist and is empty, load next', blockNumber);
           return catchup(blockNumber + 1);
         } else {
-          console.log('Retry', blockNumber);
-          return catchup(blockNumber);
+          console.log('Sleep and retry', blockNumber);
+          sleep(1000).then(() => {
+            return catchup(blockNumber);
+          });
         }
       }).catch(err => {
+        console.error('Error get_block', err);
         console.log('Retry', blockNumber);
         return catchup(blockNumber);
       });
     } else {
       console.log('Block loaded', blockNumber);
       redis.setAsync('last_block_num', blockNumber).then(() => {
-        handleOperations(ops);
-        return catchup(blockNumber + 1);
+        handleOperations(ops).then(() => {
+          return catchup(blockNumber + 1);
+        }).catch(err => {
+          console.error('handleOperations failed', err);
+        });
       }).catch(err => {
-        console.log('Redis set last_block_num failed', err);
+        console.error('Redis set last_block_num failed', err);
       });
     }
   }).catch(err => {
@@ -168,10 +189,10 @@ const catchup = (blockNumber) => {
 
 const start = () => {
   redis.getAsync('last_block_num').then((res) => {
-    let lastBlockNum = (res === null)? 19900000 : parseInt(res) + 1;
+    let lastBlockNum = (res === null)? 20000000 : parseInt(res) + 1;
     catchup(lastBlockNum);
   }).catch(err => {
-    console.log('Redis get last_block_num failed', err);
+    console.error('Redis get last_block_num failed', err);
   });
 };
 
