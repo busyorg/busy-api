@@ -1,10 +1,17 @@
 const _ = require('lodash');
+const express = require('express');
+const SocketServer = require('ws').Server;
+const { Client } = require('busyjs');
 const { createClient } = require('lightrpc');
 const bluebird = require('bluebird');
 const redis = require('./helpers/redis');
 
 const lightrpc = createClient('https://api.steemit.com');
 bluebird.promisifyAll(lightrpc);
+const port = process.env.PORT || 4000;
+const steemdWsUrl = process.env.STEEMD_WS_URL || 'wss://rpc.buildteam.io';
+
+const server = express().listen(port, () => console.log(`Listening on ${port}`));
 
 const limit = 100;
 
