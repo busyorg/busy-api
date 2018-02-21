@@ -1,54 +1,12 @@
 const _ = require('lodash');
-const express = require('express');
-const SocketServer = require('ws').Server;
-const { Client } = require('busyjs');
 const { createClient } = require('lightrpc');
 const bluebird = require('bluebird');
 const redis = require('./helpers/redis');
 
 const lightrpc = createClient('https://api.steemit.com');
 bluebird.promisifyAll(lightrpc);
-const port = process.env.PORT || 4000;
-const steemdWsUrl = process.env.STEEMD_WS_URL || 'wss://rpc.buildteam.io';
-
-const server = express().listen(port, () => console.log(`Listening on ${port}`));
-const wss = new SocketServer({ server });
-const client = new Client(steemdWsUrl);
-const cache = {};
-const useCache =  false;
 
 const limit = 100;
-
-/** Init websocket server */
-
-wss.on('connection', (ws) => {
-  console.log('Got connection from new peer');
-  ws.on('message', (message) => {
-    console.log('Message', message);
-    const call = JSON.parse(message);
-    const key = new Buffer(JSON.stringify([call.method, call.params])).toString('base64');
-    if (call.method === 'get_notifications' && call.params && call.params[0]) {
-      redis.lrangeAsync(`notifications:${call.params[0]}`, 0, -1).then((res) => {
-        console.log('Send notifications', call.params[0], res.length);
-        const notifications = res.map((notification) => JSON.parse(notification));
-        ws.send(JSON.stringify({ id: call.id, cache: true, result: notifications }));
-      }).catch(err => {
-        console.log('Redis get_notifications failed', err);
-      });
-    } else if (useCache && cache[key]) {
-      ws.send(JSON.stringify({ id: call.id, cache: true, result: cache[key] }));
-    } else {
-      client.call(call.method, call.params, (err, result) => {
-        ws.send(JSON.stringify({ id: call.id, result }));
-        if (useCache) {
-          cache[key] = result;
-        }
-      });
-    }
-  });
-  ws.on('error', () => console.log('Error on connection with peer'));
-  ws.on('close', () => console.log('Connection with peer closed'));
-});
 
 /** Stream the blockchain */
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
