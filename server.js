@@ -19,6 +19,16 @@ const useCache =  false;
 
 const limit = 100;
 
+function clearGC() {
+  try {
+    global.gc();
+  } catch (e) {
+    console.log("You must run program with 'node --expose-gc index.js' or 'npm start'");
+  }
+}
+
+setInterval(clearGC, 60 * 1000);
+
 /** Init websocket server */
 
 wss.on('connection', (ws) => {

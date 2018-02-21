@@ -2,10 +2,10 @@
   "name": "busy-api",
   "version": "1.0.0",
   "engines": {
-    "node": "7.7.1"
+    "node": ">=7.7.1"
   },
   "scripts": {
-    "start": "node ./server.js"
+    "start": "node --expose-gc ./server.js"
   },
   "dependencies": {
     "bluebird": "^3.5.1",
