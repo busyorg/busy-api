@@ -17,7 +17,7 @@ const client = new Client(steemdWsUrl);
 const cache = {};
 const useCache =  false;
 
-const limit = 50;
+const limit = 100;
 
 /** Init websocket server */
 
@@ -70,6 +70,7 @@ const handleOperations = (ops) => {
             author: params.author,
             permlink: params.permlink,
             timestamp: Date.parse(op.timestamp) / 1000,
+            block: op.block,
           };
           notifications.push([params.parent_author, notification]);
         }
@@ -90,6 +91,7 @@ const handleOperations = (ops) => {
               author: params.author,
               permlink: params.permlink,
               timestamp: Date.parse(op.timestamp) / 1000,
+              block: op.block,
             };
             notifications.push([mention, notification]);
           });
@@ -111,6 +113,7 @@ const handleOperations = (ops) => {
                 type: 'follow',
                 follower: json[1].follower,
                 timestamp: Date.parse(op.timestamp) / 1000,
+                block: op.block,
               };
               notifications.push([json[1].following, notification]);
             }
@@ -125,17 +128,8 @@ const handleOperations = (ops) => {
   /** Store notifications */
   const operations = [];
   notifications.forEach((notification) => {
-    operations.push([
-      'lpush',
-      `notifications:${notification[0]}`,
-      JSON.stringify(notification[1]),
-    ]);
-    operations.push([
-      'ltrim',
-      `notifications:${notification[0]}`,
-      0,
-      limit - 1,
-    ]);
+    operations.push(['lpush', `notifications:${notification[0]}`, JSON.stringify(notification[1])]);
+    operations.push(['ltrim', `notifications:${notification[0]}`, 0, limit - 1]);
   });
 
   return new Promise((resolve, reject) => {
