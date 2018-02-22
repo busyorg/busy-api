@@ -63,7 +63,7 @@ wss.on('connection', (ws) => {
 /** Stream the blockchain */
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-const handleOperations = (ops) => {
+const getRedisOperations = (ops) => {
   const notifications = [];
   ops.forEach((op) => {
     const type = op.op[0];
@@ -136,59 +136,55 @@ const handleOperations = (ops) => {
     }
   });
 
-  /** Store notifications */
+  /** Create redis operations array */
   const operations = [];
   notifications.forEach((notification) => {
     operations.push(['lpush', `notifications:${notification[0]}`, JSON.stringify(notification[1])]);
     operations.push(['ltrim', `notifications:${notification[0]}`, 0, limit - 1]);
   });
-
-  return new Promise((resolve, reject) => {
-    redis.multi(operations).execAsync().then(() => {
-      console.log(`- Notification: +${notifications.length}`);
-      resolve();
-    }).catch(err => {
-      console.error('Redis store notification multi failed', err);
-      reject(err);
-    });
-  });
+  return operations;
 };
 
 const catchup = (blockNumber) => {
   lightrpc.sendAsync('get_ops_in_block', [blockNumber, false]).then(ops => {
     if (!ops.length) {
-      console.error('Block does not exit?');
+      console.error('Block does not exit?', blockNumber);
       lightrpc.sendAsync('get_block', [blockNumber]).then(block => {
         if (block && block.transactions.length === 0) {
           console.log('Block exist and is empty, load next', blockNumber);
-          return catchup(blockNumber + 1);
+          redis.setAsync('last_block_num', blockNumber).then(() => {
+            catchup(blockNumber + 1);
+          }).catch(err => {
+            console.error('Redis set last_block_num failed', err);
+            catchup(blockNumber);
+          });
         } else {
           console.log('Sleep and retry', blockNumber);
-          sleep(1000).then(() => {
-            return catchup(blockNumber);
+          sleep(2000).then(() => {
+            catchup(blockNumber);
           });
         }
       }).catch(err => {
         console.error('Error get_block', err);
         console.log('Retry', blockNumber);
-        return catchup(blockNumber);
+        catchup(blockNumber);
       });
     } else {
-      console.log('Block loaded', blockNumber);
-      redis.setAsync('last_block_num', blockNumber).then(() => {
-        handleOperations(ops).then(() => {
-          return catchup(blockNumber + 1);
-        }).catch(err => {
-          console.error('handleOperations failed', err);
-        });
+      const operations = getRedisOperations(ops);
+      operations.push(['set', 'last_block_num', blockNumber]);
+      redis.multi(operations).execAsync().then(() => {
+        console.log('Block', blockNumber, 'notification stored', operations.length - 1);
+        console.log(operations);
+        catchup(blockNumber + 1);
       }).catch(err => {
-        console.error('Redis set last_block_num failed', err);
+        console.error('Redis store notification multi failed', err);
+        catchup(blockNumber);
       });
     }
   }).catch(err => {
     console.error('Call failed with lightrpc', err);
     console.log('Retry', blockNumber);
-    return catchup(blockNumber);
+    catchup(blockNumber);
   });
 };
 
