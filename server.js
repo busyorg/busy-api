@@ -19,13 +19,13 @@ const useCache =  false;
 
 const limit = 100;
 
-function clearGC() {
+const clearGC = () => {
   try {
     global.gc();
   } catch (e) {
     console.log("You must run program with 'node --expose-gc index.js' or 'npm start'");
   }
-}
+};
 
 setInterval(clearGC, 60 * 1000);
 
@@ -145,7 +145,7 @@ const getRedisOperations = (ops) => {
   return operations;
 };
 
-const catchup = (blockNumber) => {
+const loadBlock = (blockNumber) => {
   lightrpc.sendAsync('get_ops_in_block', [blockNumber, false]).then(ops => {
     if (!ops.length) {
       console.error('Block does not exit?', blockNumber);
@@ -153,49 +153,67 @@ const catchup = (blockNumber) => {
         if (block && block.previous && block.transactions.length === 0) {
           console.log('Block exist and is empty, load next', blockNumber);
           redis.setAsync('last_block_num', blockNumber).then(() => {
-            catchup(blockNumber + 1);
+            loadNextBlock();
           }).catch(err => {
             console.error('Redis set last_block_num failed', err);
-            catchup(blockNumber);
+            loadBlock(blockNumber);
           });
         } else {
           console.log('Sleep and retry', blockNumber);
           sleep(2000).then(() => {
-            catchup(blockNumber);
+            loadBlock(blockNumber);
           });
         }
       }).catch(err => {
         console.log('Error get_block, sleep and retry', blockNumber, JSON.stringify(err));
         sleep(2000).then(() => {
-          catchup(blockNumber);
+          loadBlock(blockNumber);
         });
       });
     } else {
       const operations = getRedisOperations(ops);
       operations.push(['set', 'last_block_num', blockNumber]);
       redis.multi(operations).execAsync().then(() => {
-        console.log('Block', blockNumber, 'notification stored', operations.length - 1);
-        console.log(operations);
-        catchup(blockNumber + 1);
+        console.log('Block loaded', blockNumber, 'notification stored', operations.length - 1, operations);
+        loadNextBlock();
       }).catch(err => {
         console.error('Redis store notification multi failed', err);
-        catchup(blockNumber);
+        loadBlock(blockNumber);
       });
     }
   }).catch(err => {
     console.error('Call failed with lightrpc', err);
     console.log('Retry', blockNumber);
-    catchup(blockNumber);
+    loadBlock(blockNumber);
+  });
+};
+
+const loadNextBlock = () => {
+  redis.getAsync('last_block_num').then((res) => {
+    let nextBlockNum = (res === null)? 20000000 : parseInt(res) + 1;
+    lightrpc.sendAsync('get_dynamic_global_properties', []).then(globalProps => {
+      const lastIrreversibleBlockNum = globalProps.last_irreversible_block_num;
+      if (lastIrreversibleBlockNum >= nextBlockNum) {
+        loadBlock(nextBlockNum);
+      } else {
+        sleep(2000).then(() => {
+          console.log('Waiting to be on the lastIrreversibleBlockNum', lastIrreversibleBlockNum, 'now nextBlockNum', nextBlockNum);
+          loadNextBlock();
+        });
+      }
+    }).catch(err => {
+      console.error('Call failed with lightrpc', err);
+      console.log('Retry loadNextBlock');
+      loadNextBlock();
+    });
+  }).catch(err => {
+    console.error('Redis get last_block_num failed', err);
   });
 };
 
 const start = () => {
-  redis.getAsync('last_block_num').then((res) => {
-    let lastBlockNum = (res === null)? 20000000 : parseInt(res) + 1;
-    catchup(lastBlockNum);
-  }).catch(err => {
-    console.error('Redis get last_block_num failed', err);
-  });
+  console.info('Start streaming blockchain');
+  loadNextBlock();
 };
 
 // redis.flushallAsync();
