@@ -150,7 +150,7 @@ const catchup = (blockNumber) => {
     if (!ops.length) {
       console.error('Block does not exit?', blockNumber);
       lightrpc.sendAsync('get_block', [blockNumber]).then(block => {
-        if (block && block.transactions.length === 0) {
+        if (block && block.previous && block.transactions.length === 0) {
           console.log('Block exist and is empty, load next', blockNumber);
           redis.setAsync('last_block_num', blockNumber).then(() => {
             catchup(blockNumber + 1);
