@@ -165,9 +165,10 @@ const catchup = (blockNumber) => {
           });
         }
       }).catch(err => {
-        console.error('Error get_block', err);
-        console.log('Retry', blockNumber);
-        catchup(blockNumber);
+        console.log('Error get_block, sleep and retry', blockNumber, JSON.stringify(err));
+        sleep(2000).then(() => {
+          catchup(blockNumber);
+        });
       });
     } else {
       const operations = getRedisOperations(ops);
