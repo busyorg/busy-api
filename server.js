@@ -128,12 +128,25 @@ const getRedisOperations = (ops) => {
               };
               notifications.push([json[1].following, notification]);
             }
+            /** Find reblog */
+            if (json[0] === 'reblog' && json[1].account && json[1].author && json[1].permlink) {
+              const notification = {
+                type: 'reblog',
+                account: json[1].account,
+                permlink: json[1].permlink,
+                timestamp: Date.parse(op.timestamp) / 1000,
+                block: op.block,
+              };
+              // console.log('Reblog', [json[1].author, JSON.stringify(notification)]);
+              notifications.push([json[1].author, notification]);
+            }
             break;
           }
         }
         break;
       }
       case 'account_witness_vote': {
+        /** Find witness vote */
         const notification = {
           type: 'witness_vote',
           account: params.account,
