@@ -133,6 +133,18 @@ const getRedisOperations = (ops) => {
         }
         break;
       }
+      case 'account_witness_vote': {
+        const notification = {
+          type: 'witness_vote',
+          account: params.account,
+          approve: params.approve,
+          timestamp: Date.parse(op.timestamp) / 1000,
+          block: op.block,
+        };
+        // console.log('Witness vote', [params.witness, notification]);
+        notifications.push([params.witness, notification]);
+        break;
+      }
     }
   });
 
@@ -174,7 +186,7 @@ const loadBlock = (blockNumber) => {
       const operations = getRedisOperations(ops);
       operations.push(['set', 'last_block_num', blockNumber]);
       redis.multi(operations).execAsync().then(() => {
-        console.log('Block loaded', blockNumber, 'notification stored', operations.length - 1, operations);
+        console.log('Block loaded', blockNumber, 'notification stored', operations.length - 1);
         loadNextBlock();
       }).catch(err => {
         console.error('Redis store notification multi failed', err);
