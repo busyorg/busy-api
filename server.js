@@ -174,6 +174,20 @@ const getRedisOperations = (ops) => {
         }
         break;
       }
+      case 'transfer': {
+        /** Find transfer */
+        const notification = {
+          type: 'transfer',
+          from: params.from,
+          amount: params.amount,
+          memo: params.memo,
+          timestamp: Date.parse(op.timestamp) / 1000,
+          block: op.block,
+        };
+        // console.log('Transfer', JSON.stringify([params.to, notification]));
+        notifications.push([params.to, notification]);
+        break;
+      }
     }
   });
 
