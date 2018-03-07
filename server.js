@@ -92,7 +92,7 @@ wss.on('connection', (ws) => {
 /** Stream the blockchain */
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-const getRedisOperations = (ops) => {
+const getNotifications = (ops) => {
   const notifications = [];
   ops.forEach((op) => {
     const type = op.op[0];
@@ -219,14 +219,7 @@ const getRedisOperations = (ops) => {
       }
     }
   });
-
-  /** Create redis operations array */
-  const operations = [];
-  notifications.forEach((notification) => {
-    operations.push(['lpush', `notifications:${notification[0]}`, JSON.stringify(notification[1])]);
-    operations.push(['ltrim', `notifications:${notification[0]}`, 0, limit - 1]);
-  });
-  return operations;
+  return notifications;
 };
 
 const loadBlock = (blockNumber) => {
@@ -255,10 +248,17 @@ const loadBlock = (blockNumber) => {
         });
       });
     } else {
-      const operations = getRedisOperations(ops);
-      operations.push(['set', 'last_block_num', blockNumber]);
-      redis.multi(operations).execAsync().then(() => {
-        console.log('Block loaded', blockNumber, 'notification stored', operations.length - 1);
+      const notifications = getNotifications(ops);
+      /** Create redis operations array */
+      const redisOps = [];
+      notifications.forEach((notification) => {
+        redisOps.push(['lpush', `notifications:${notification[0]}`, JSON.stringify(notification[1])]);
+        redisOps.push(['ltrim', `notifications:${notification[0]}`, 0, limit - 1]);
+      });
+      redisOps.push(['set', 'last_block_num', blockNumber]);
+      redis.multi(redisOps).execAsync().then(() => {
+        console.log('Block loaded', blockNumber, 'notification stored', notifications.length);
+        // @TODO send notification to logged peers
         loadNextBlock();
       }).catch(err => {
         console.error('Redis store notification multi failed', err);
