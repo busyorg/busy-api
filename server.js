@@ -4,8 +4,10 @@ const SocketServer = require('ws').Server;
 const { Client } = require('busyjs');
 const { createClient } = require('lightrpc');
 const bluebird = require('bluebird');
+const sdk = require('sc2-sdk');
 const redis = require('./helpers/redis');
 
+const sc2 = sdk.Initialize({ app: 'busy.app' });
 const lightrpc = createClient('https://api.steemit.com');
 bluebird.promisifyAll(lightrpc);
 const port = process.env.PORT || 4000;
@@ -46,12 +48,28 @@ wss.on('connection', (ws) => {
       redis.lrangeAsync(`notifications:${call.params[0]}`, 0, -1).then((res) => {
         console.log('Send notifications', call.params[0], res.length);
         const notifications = res.map((notification) => JSON.parse(notification));
-        ws.send(JSON.stringify({ id: call.id, cache: true, result: notifications }));
+        ws.send(JSON.stringify({ id: call.id, result: notifications }));
       }).catch(err => {
         console.log('Redis get_notifications failed', err);
       });
     // } else if (useCache && cache[key]) {
     //  ws.send(JSON.stringify({ id: call.id, cache: true, result: cache[key] }));
+    } else if (call.method === 'login' && call.params && call.params[0]) {
+      sc2.setAccessToken(call.params[0]);
+      sc2.me().then(result => {
+        console.log('Login success', result.name);
+        ws.name = result.name;
+        ws.account = result.account;
+        ws.user_metadata = result.user_metadata;
+        ws.send(JSON.stringify({ id: call.id, result: { login: true, username: result.name } }));
+      }).catch(err => {
+        console.error('Login failed', err);
+        ws.send(JSON.stringify({
+          id: call.id,
+          result: {},
+          error: 'Something is wrong',
+        }));
+      });
     } else if (call.method && call.params) {
       client.call(call.method, call.params, (err, result) => {
         ws.send(JSON.stringify({ id: call.id, result }));
