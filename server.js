@@ -272,12 +272,6 @@ const loadBlock = (blockNumber) => {
           });
         });
 
-        wss.clients.forEach((client) => {
-          if (client.name) {
-            console.log('Peer name', client.name);
-          }
-        });
-
         loadNextBlock();
       }).catch(err => {
         console.error('Redis store notification multi failed', err);
@@ -317,6 +311,13 @@ const loadNextBlock = () => {
 const start = () => {
   console.info('Start streaming blockchain');
   loadNextBlock();
+
+  /** Send heartbeat to peers */
+  setInterval(() => {
+    wss.clients.forEach((client) => {
+      client.send(JSON.stringify({ type: 'heartbeat' }));
+    });
+  }, 3 * 1000);
 };
 
 // redis.flushallAsync();
