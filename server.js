@@ -272,6 +272,12 @@ const loadBlock = (blockNumber) => {
           });
         });
 
+        wss.clients.forEach((client) => {
+          if (client.name) {
+            console.log('Peer name', client.name);
+          }
+        });
+
         loadNextBlock();
       }).catch(err => {
         console.error('Redis store notification multi failed', err);
