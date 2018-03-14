@@ -317,7 +317,7 @@ const start = () => {
     wss.clients.forEach((client) => {
       client.send(JSON.stringify({ type: 'heartbeat' }));
     });
-  }, 3 * 1000);
+  }, 20 * 1000);
 };
 
 // redis.flushallAsync();
