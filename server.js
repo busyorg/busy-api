@@ -258,7 +258,20 @@ const loadBlock = (blockNumber) => {
       redisOps.push(['set', 'last_block_num', blockNumber]);
       redis.multi(redisOps).execAsync().then(() => {
         console.log('Block loaded', blockNumber, 'notification stored', notifications.length);
-        // @TODO send notification to logged peers
+
+        /** Send push notification for logged peers */
+        notifications.forEach((notification) => {
+          wss.clients.forEach((client) => {
+            if (client.name && client.name === notification[0]) {
+              console.log('Send push notification', notification[0]);
+              client.send(JSON.stringify({
+                type: 'notification',
+                notification: notification[1]
+              }));
+            }
+          });
+        });
+
         loadNextBlock();
       }).catch(err => {
         console.error('Redis store notification multi failed', err);
