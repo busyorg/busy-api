@@ -8,7 +8,7 @@ const sdk = require('sc2-sdk');
 const redis = require('./helpers/redis');
 
 const sc2 = sdk.Initialize({ app: 'busy.app' });
-const lightrpc = createClient('https://api.steemit.com');
+const lightrpc = createClient('https://api.steemit.com', { timeout: 15000 });
 bluebird.promisifyAll(lightrpc);
 const port = process.env.PORT || 4000;
 const steemdWsUrl = process.env.STEEMD_WS_URL || 'wss://rpc.buildteam.io';
