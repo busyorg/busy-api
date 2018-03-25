@@ -8,10 +8,11 @@
     "start": "node --expose-gc ./server.js"
   },
   "dependencies": {
+    "algoliasearch": "^3.25.1",
     "bluebird": "^3.5.1",
     "busyjs": "https://github.com/busyorg/busyjs#dev",
     "express": "^4.16.2",
-    "lightrpc": "0.0.5",
+    "lightrpc": "^1.0.0-beta.4",
     "lodash": "^4.17.5",
     "redis": "^2.8.0",
     "sc2-sdk": "^1.0.2",
