@@ -2,20 +2,19 @@ const _ = require('lodash');
 const express = require('express');
 const SocketServer = require('ws').Server;
 const { Client } = require('busyjs');
-const { createClient } = require('lightrpc');
-const bluebird = require('bluebird');
 const sdk = require('sc2-sdk');
 const redis = require('./helpers/redis');
+const utils = require('./helpers/utils');
 
 const sc2 = sdk.Initialize({ app: 'busy.app' });
-const lightrpc = createClient('https://api.steemit.com', { timeout: 15000 });
-bluebird.promisifyAll(lightrpc);
-const port = process.env.PORT || 4000;
-const steemdWsUrl = process.env.STEEMD_WS_URL || 'wss://rpc.buildteam.io';
 
+const port = process.env.PORT || 4000;
 const server = express().listen(port, () => console.log(`Listening on ${port}`));
 const wss = new SocketServer({ server });
+
+const steemdWsUrl = process.env.STEEMD_WS_URL || 'wss://rpc.buildteam.io';
 const client = new Client(steemdWsUrl);
+
 const cache = {};
 const useCache =  false;
 
@@ -89,8 +88,7 @@ wss.on('connection', (ws) => {
   ws.on('close', () => console.log('Connection with peer closed'));
 });
 
-/** Stream the blockchain */
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+/** Stream the blockchain for notifications */
 
 const getNotifications = (ops) => {
   const notifications = [];
@@ -222,29 +220,29 @@ const getNotifications = (ops) => {
   return notifications;
 };
 
-const loadBlock = (blockNumber) => {
-  lightrpc.sendAsync('get_ops_in_block', [blockNumber, false]).then(ops => {
+const loadBlock = (blockNum) => {
+  utils.getOpsInBlock(blockNum, false).then(ops => {
     if (!ops.length) {
-      console.error('Block does not exit?', blockNumber);
-      lightrpc.sendAsync('get_block', [blockNumber]).then(block => {
+      console.error('Block does not exit?', blockNum);
+      utils.getBlock(blockNum).then(block => {
         if (block && block.previous && block.transactions.length === 0) {
-          console.log('Block exist and is empty, load next', blockNumber);
-          redis.setAsync('last_block_num', blockNumber).then(() => {
+          console.log('Block exist and is empty, load next', blockNum);
+          redis.setAsync('last_block_num', blockNum).then(() => {
             loadNextBlock();
           }).catch(err => {
             console.error('Redis set last_block_num failed', err);
-            loadBlock(blockNumber);
+            loadBlock(blockNum);
           });
         } else {
-          console.log('Sleep and retry', blockNumber);
-          sleep(2000).then(() => {
-            loadBlock(blockNumber);
+          console.log('Sleep and retry', blockNum);
+          utils.sleep(2000).then(() => {
+            loadBlock(blockNum);
           });
         }
       }).catch(err => {
-        console.log('Error get_block, sleep and retry', blockNumber, JSON.stringify(err));
-        sleep(2000).then(() => {
-          loadBlock(blockNumber);
+        console.log('Error lightrpc (getBlock), sleep and retry', blockNum, JSON.stringify(err));
+        utils.sleep(2000).then(() => {
+          loadBlock(blockNum);
         });
       });
     } else {
@@ -255,9 +253,9 @@ const loadBlock = (blockNumber) => {
         redisOps.push(['lpush', `notifications:${notification[0]}`, JSON.stringify(notification[1])]);
         redisOps.push(['ltrim', `notifications:${notification[0]}`, 0, limit - 1]);
       });
-      redisOps.push(['set', 'last_block_num', blockNumber]);
+      redisOps.push(['set', 'last_block_num', blockNum]);
       redis.multi(redisOps).execAsync().then(() => {
-        console.log('Block loaded', blockNumber, 'notification stored', notifications.length);
+        console.log('Block loaded', blockNum, 'notification stored', notifications.length);
 
         /** Send push notification for logged peers */
         notifications.forEach((notification) => {
@@ -275,31 +273,31 @@ const loadBlock = (blockNumber) => {
         loadNextBlock();
       }).catch(err => {
         console.error('Redis store notification multi failed', err);
-        loadBlock(blockNumber);
+        loadBlock(blockNum);
       });
     }
   }).catch(err => {
-    console.error('Call failed with lightrpc', err);
-    console.log('Retry', blockNumber);
-    loadBlock(blockNumber);
+    console.error('Call failed with lightrpc (getOpsInBlock)', err);
+    console.log('Retry', blockNum);
+    loadBlock(blockNum);
   });
 };
 
 const loadNextBlock = () => {
   redis.getAsync('last_block_num').then((res) => {
     let nextBlockNum = (res === null)? 20000000 : parseInt(res) + 1;
-    lightrpc.sendAsync('get_dynamic_global_properties', []).then(globalProps => {
+    utils.getGlobalProps().then(globalProps => {
       const lastIrreversibleBlockNum = globalProps.last_irreversible_block_num;
       if (lastIrreversibleBlockNum >= nextBlockNum) {
         loadBlock(nextBlockNum);
       } else {
-        sleep(2000).then(() => {
+        utils.sleep(2000).then(() => {
           console.log('Waiting to be on the lastIrreversibleBlockNum', lastIrreversibleBlockNum, 'now nextBlockNum', nextBlockNum);
           loadNextBlock();
         });
       }
     }).catch(err => {
-      console.error('Call failed with lightrpc', err);
+      console.error('Call failed with lightrpc (getGlobalProps)', err);
       console.log('Retry loadNextBlock');
       loadNextBlock();
     });
