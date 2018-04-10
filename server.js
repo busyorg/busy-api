@@ -186,19 +186,17 @@ const getNotifications = (ops) => {
         break;
       }
       case 'vote': {
-        /** Find downvote */
-        if (params.weight < 0) {
-          const notification = {
-            type: 'vote',
-            voter: params.voter,
-            permlink: params.permlink,
-            weight: params.weight,
-            timestamp: Date.parse(op.timestamp) / 1000,
-            block: op.block,
-          };
-          // console.log('Downvote', JSON.stringify([params.author, notification]));
-          notifications.push([params.author, notification]);
-        }
+        /** Find vote */
+        const notification = {
+          type: 'vote',
+          voter: params.voter,
+          permlink: params.permlink,
+          weight: params.weight,
+          timestamp: Date.parse(op.timestamp) / 1000,
+          block: op.block,
+        };
+        // console.log('Vote', JSON.stringify([params.author, notification]));
+        notifications.push([params.author, notification]);
         break;
       }
       case 'transfer': {
