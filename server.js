@@ -298,8 +298,10 @@ const loadNextBlock = () => {
       }
     }).catch(err => {
       console.error('Call failed with lightrpc (getGlobalProps)', err);
-      console.log('Retry loadNextBlock');
-      loadNextBlock();
+      utils.sleep(2000).then(() => {
+        console.log('Retry loadNextBlock', nextBlockNum);
+        loadNextBlock();
+      });
     });
   }).catch(err => {
     console.error('Redis get last_block_num failed', err);
