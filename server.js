@@ -100,7 +100,7 @@ const getNotifications = (ops) => {
         const isRootPost = !params.parent_author;
 
         /** Find replies */
-        if (!isRootPost) {
+        if (!isRootPost && params.category === 'utopian-io') {
           const notification = {
             type: 'reply',
             parent_permlink: params.parent_permlink,
@@ -133,7 +133,10 @@ const getNotifications = (ops) => {
               block: op.block,
               category: params.category,
             };
-            notifications.push([mention, notification]);
+
+            if (params.category === 'utopian-io') {
+              notifications.push([mention, notification]);
+            }
           });
         }
         break;
