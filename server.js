@@ -201,7 +201,9 @@ const getNotifications = (ops) => {
           block: op.block,
         };
         // console.log('Vote', JSON.stringify([params.author, notification]));
-        notifications.push([params.author, notification]);
+        if (params.voter === 'utopian-io' || params.voter === 'utopian.tip') {
+          notifications.push([params.author, notification]);
+        }
         break;
       }
       case 'transfer': {
