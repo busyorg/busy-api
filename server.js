@@ -108,6 +108,7 @@ const getNotifications = (ops) => {
             permlink: params.permlink,
             timestamp: Date.parse(op.timestamp) / 1000,
             block: op.block,
+            category: params.category,
           };
           notifications.push([params.parent_author, notification]);
         }
@@ -130,6 +131,7 @@ const getNotifications = (ops) => {
               permlink: params.permlink,
               timestamp: Date.parse(op.timestamp) / 1000,
               block: op.block,
+              category: params.category,
             };
             notifications.push([mention, notification]);
           });
