@@ -128,17 +128,17 @@ const getNotifications = (ops) => {
           .slice(0, 9); // Handle maximum 10 mentions per post
         if (mentions.length) {
           mentions.forEach(mention => {
-            const notification = {
-              type: 'mention',
-              is_root_post: isRootPost,
-              author: params.author,
-              permlink: params.permlink,
-              timestamp: Date.parse(op.timestamp) / 1000,
-              block: op.block,
-              category: metadata.tags[0],
-            };
-
             if (isTargetCategory) {
+              const notification = {
+                type: 'mention',
+                is_root_post: isRootPost,
+                author: params.author,
+                permlink: params.permlink,
+                timestamp: Date.parse(op.timestamp) / 1000,
+                block: op.block,
+                category: metadata.tags[0],
+              };
+
               console.log('UTOPIAN MENTION to redis, author = ' + params.author + ' / category = ' + metadata.tags[0]);
               console.log(notification);
               notifications.push([mention, notification]);
