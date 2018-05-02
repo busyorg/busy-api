@@ -100,7 +100,10 @@ const getNotifications = (ops) => {
         const isRootPost = !params.parent_author;
 
         /** Find replies */
-        if (!isRootPost && (params.category === 'utopian-io' || params.category === 'test-category')) {
+        const metadata = JSON.parse(params.json_metadata);
+        const isTargetCategory = metadata && metadata.tags && (metadata.tags[0] === 'utopian-io' || metadata.tags[0] === 'test-category');
+        console.log(metadata);
+        if (!isRootPost && isTargetCategory) {
           console.log('UTOPIAN REPLY to redis')
           const notification = {
             type: 'reply',
@@ -109,7 +112,7 @@ const getNotifications = (ops) => {
             permlink: params.permlink,
             timestamp: Date.parse(op.timestamp) / 1000,
             block: op.block,
-            category: params.category,
+            category: metadata.tags[0],
           };
           notifications.push([params.parent_author, notification]);
         }
@@ -132,10 +135,10 @@ const getNotifications = (ops) => {
               permlink: params.permlink,
               timestamp: Date.parse(op.timestamp) / 1000,
               block: op.block,
-              category: params.category,
+              category: metadata.tags[0],
             };
 
-            if (params.category === 'utopian-io' || params.category === 'test-category') {
+            if (isTargetCategory) {
               console.log('UTOPIAN MENTION to redis')
               notifications.push([mention, notification]);
             }
