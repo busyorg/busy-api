@@ -192,16 +192,17 @@ const getNotifications = (ops) => {
       }
       case 'vote': {
         /** Find vote */
+        const voter = params.voter;
         const notification = {
           type: 'vote',
-          voter: params.voter,
+          voter: voter,
           permlink: params.permlink,
           weight: params.weight,
           timestamp: Date.parse(op.timestamp) / 1000,
           block: op.block,
         };
         // console.log('Vote', JSON.stringify([params.author, notification]));
-        if (params.voter === 'utopian-io' || params.voter === 'utopian.tip') {
+        if (voter === 'utopian-io' || voter === 'utopian.tip' || voter === 'eastmael' || voter === 'east.autovote') {
           notifications.push([params.author, notification]);
         }
         break;
