@@ -102,9 +102,7 @@ const getNotifications = (ops) => {
         /** Find replies */
         const metadata = JSON.parse(params.json_metadata);
         const isTargetCategory = metadata && metadata.tags && (metadata.tags[0] === 'utopian-io' || metadata.tags[0] === 'test-category');
-        console.log(metadata);
         if (!isRootPost && isTargetCategory) {
-          console.log('UTOPIAN REPLY to redis')
           const notification = {
             type: 'reply',
             parent_permlink: params.parent_permlink,
@@ -114,6 +112,8 @@ const getNotifications = (ops) => {
             block: op.block,
             category: metadata.tags[0],
           };
+          console.log('UTOPIAN REPLY to redis, author = ' + params.author + ' / category = ' + metadata.tags[0]);
+          console.log(notification);
           notifications.push([params.parent_author, notification]);
         }
 
@@ -139,7 +139,8 @@ const getNotifications = (ops) => {
             };
 
             if (isTargetCategory) {
-              console.log('UTOPIAN MENTION to redis')
+              console.log('UTOPIAN MENTION to redis, author = ' + params.author + ' / category = ' + metadata.tags[0]);
+              console.log(notification);
               notifications.push([mention, notification]);
             }
           });
@@ -208,7 +209,8 @@ const getNotifications = (ops) => {
         };
         // console.log('Vote', JSON.stringify([params.author, notification]));
         if (voter === 'utopian-io' || voter === 'utopian.tip' || voter === 'eastmael' || voter === 'east.autovote') {
-          console.log('UTOPIAN VOTE to redis')
+          console.log('UTOPIAN VOTE to redis; voter = ' + voter);
+          console.log(notification);
           notifications.push([params.author, notification]);
         }
         break;
