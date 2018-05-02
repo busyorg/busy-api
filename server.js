@@ -101,6 +101,7 @@ const getNotifications = (ops) => {
 
         /** Find replies */
         if (!isRootPost && (params.category === 'utopian-io' || params.category === 'test-category')) {
+          console.log('UTOPIAN REPLY to redis')
           const notification = {
             type: 'reply',
             parent_permlink: params.parent_permlink,
@@ -135,6 +136,7 @@ const getNotifications = (ops) => {
             };
 
             if (params.category === 'utopian-io' || params.category === 'test-category') {
+              console.log('UTOPIAN MENTION to redis')
               notifications.push([mention, notification]);
             }
           });
@@ -203,6 +205,7 @@ const getNotifications = (ops) => {
         };
         // console.log('Vote', JSON.stringify([params.author, notification]));
         if (voter === 'utopian-io' || voter === 'utopian.tip' || voter === 'eastmael' || voter === 'east.autovote') {
+          console.log('UTOPIAN VOTE to redis')
           notifications.push([params.author, notification]);
         }
         break;
