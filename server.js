@@ -100,7 +100,7 @@ const getNotifications = (ops) => {
         const isRootPost = !params.parent_author;
 
         /** Find replies */
-        const metadata = JSON.parse(params.json_metadata);
+        const metadata = params.json_metadata;
         const isTargetCategory = metadata && metadata.tags && (metadata.tags[0] === 'utopian-io' || metadata.tags[0] === 'test-category');
         if (!isRootPost && isTargetCategory) {
           const notification = {
