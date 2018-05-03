@@ -299,7 +299,7 @@ const loadBlock = (blockNum) => {
 
 const loadNextBlock = () => {
   redis.getAsync('last_block_num').then((res) => {
-    let nextBlockNum = (res === null)? 20000000 : parseInt(res) + 1;
+    let nextBlockNum = (res === null)? 22000000 : parseInt(res) + 1;
     utils.getGlobalProps().then(globalProps => {
       const lastIrreversibleBlockNum = globalProps.last_irreversible_block_num;
       if (lastIrreversibleBlockNum >= nextBlockNum) {
