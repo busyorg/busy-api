@@ -58,6 +58,7 @@ wss.on('connection', (ws) => {
       sc2.me().then(result => {
         console.log('Login success', result.name);
         ws.name = result.name;
+        ws.verified = true;
         ws.account = result.account;
         ws.user_metadata = result.user_metadata;
         ws.send(JSON.stringify({ id: call.id, result: { login: true, username: result.name } }));
@@ -69,6 +70,10 @@ wss.on('connection', (ws) => {
           error: 'Something is wrong',
         }));
       });
+    } else if (call.method === 'subscribe' && call.params && call.params[0]) {
+        console.log('Subscribe success', call.params[0]);
+        ws.name = call.params[0];
+        ws.send(JSON.stringify({ id: call.id, result: { subscribe: true, username: call.params[0] } }));
     } else if (call.method && call.params) {
       client.call(call.method, call.params, (err, result) => {
         ws.send(JSON.stringify({ id: call.id, result }));
