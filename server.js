@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const redis = require('./helpers/redis');
 const utils = require('./helpers/utils');
 const router = require('./routes');
+const notificationUtils = require('./helpers/expoNotifications');
 
 const sc2 = sdk.Initialize({ app: 'busy.app' });
 
@@ -280,13 +281,9 @@ const loadBlock = (blockNum) => {
               }));
             }
           });
-          console.log(notification);
-          // redis.lrangeAsync(`tokens:${notification[0]}`, 0, -1)
-          //   .then((tokens) => {
-          //     tokens.forEach(token => expo.)
-          //   });
         });
-
+        /** Send notifications to all devices */
+        notificationUtils.sendAllNotifications(notifications);
         loadNextBlock();
       }).catch(err => {
         console.error('Redis store notification multi failed', err);
