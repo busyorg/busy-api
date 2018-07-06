@@ -16,31 +16,27 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/register', validTokenMiddleware, async (req, res) => {
-  redis.lrangeAsync(`tokens:${req.user.name}`, 0, -1)
-    .then((tokens) => {
-      const tokenAlreadyExists = _.some(tokens, token => req.expoToken === token);
-      if (tokenAlreadyExists) {
-        res.status(400).send({ error: 'already registered with this token' });
+  redis.saddAsync(`tokens:${req.user.name}`, req.expoToken)
+    .then((result) => {
+      if (result === 1) {  // 1 token was added
+        res.send({ message: 'registered' });
       } else {
-        redis.rpush([`tokens:${req.user.name}`, req.expoToken], (err) => {
-          if (err) {
-            return Promise.reject(err);
-          } else {
-            res.send({ message: 'registered' });
-          }
-        });
+        res.status(400).send({ error: 'already registered with this token' });
       }
-    });
+    })
+    .catch(() => res.sendStatus(500));
 });
 
 router.post('/unregister', validTokenMiddleware, async (req, res) => {
-  redis.lrem(`tokens:${req.user.name}`, 1, req.expoToken, err => {
-    if (err) {
-      return Promise.reject(err);
-    } else {
-      res.send({ message: 'unregistered' });
-    }
-  });
+  redis.sremAsync(`tokens:${req.user.name}`, req.expoToken)
+    .then((result) => {
+      if (result === 1) {  // 1 token removed from set
+        res.send({ message: 'unregistered' });
+      } else {
+        res.status(404).send({ error: 'token not already registered' });
+      }
+    })
+    .catch(() => res.sendStatus(500));
 });
 
 module.exports = router;

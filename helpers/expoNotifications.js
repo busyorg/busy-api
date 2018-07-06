@@ -6,22 +6,34 @@ const notificationTypes = require('./constants').notificationTypes;
 const expo = new Expo();
 
 const sendAllNotifications = (notifications) => {
-  const users = _.uniq(notifications.map(notification => notification[0]));
+  // Collect notifications by user
+  const userNotifications = {};
+  notifications.forEach((notification) => {
+    const user = notification[0];
+    if (!userNotifications[user]) {
+      userNotifications[user] = [];
+    }
+    userNotifications[user].push(notification);
+  });
 
-  users.forEach(user => {
-    const userNotifications = notifications.filter(notification => notification[0] === user);
-    redis.lrangeAsync(`tokens:${user}`, 0, -1)
-      .then((userTokens) => {
+  Object.keys(userNotifications).forEach((user) => {
+    const currentUserNotifications = userNotifications[user];
+    redis.smembersAsync(`tokens:${user}`)
+      .then(async (tokens) => {
         const messages = [];
-        userNotifications.forEach((uesrNotification) => {
-          userTokens.forEach((userToken) => {
-            messages.push(getNotificationMessage(uesrNotification, userToken));
-          });
+        currentUserNotifications.forEach((currentUserNotification) => {
+          tokens.forEach(token => messages.push(
+            getNotificationMessage(currentUserNotification, token),
+          ));
         });
         const chunks = expo.chunkPushNotifications(messages);
-        for (let chunk of chunks) {
-          expo.sendPushNotificationsAsync(chunk)
-            .then(response => console.log('Expo Chunk Sent', response));
+        for (const chunk of chunks) {
+          try {
+            const resp = await expo.sendPushNotificationsAsync(chunk);
+            console.log('Expo chunk set', resp);
+          } catch (error) {
+            console.log('Error sending expo chunk', error);
+          }
         }
       });
   });
