@@ -20,6 +20,8 @@ const sendAllNotifications = (notifications) => {
     const currentUserNotifications = userNotifications[user];
     redis.smembersAsync(`tokens:${user}`)
       .then(async (tokens) => {
+        if (tokens.length === 0) return;
+
         const messages = [];
         currentUserNotifications.forEach((currentUserNotification) => {
           tokens.forEach(token => messages.push(
