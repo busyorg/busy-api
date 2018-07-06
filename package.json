@@ -1,8 +1,9 @@
 {
   "name": "busy-api",
   "version": "1.0.0",
+  "license": "MIT",
   "engines": {
-    "node": "9.5.0"
+    "node": "8.11.3"
   },
   "scripts": {
     "start": "node --expose-gc ./server.js"

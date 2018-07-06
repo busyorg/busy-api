@@ -4,8 +4,6 @@ The API server for [Busy](https://busy.org/) - Blockchain-based social network w
 
 ## Development
 
-The project requires `node` at version `9.5.0`. If you are using a different version, you can use [NVM](https://github.com/creationix/nvm) to switch to this one.
-
 [Yarn](https://yarnpkg.com/) package manager is used for this project. To install yarn, use
 
 ```shell
