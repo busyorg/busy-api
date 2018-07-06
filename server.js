@@ -113,7 +113,9 @@ const getNotifications = (ops) => {
         const isRootPost = !params.parent_author;
 
         /** Find replies */
-        if (!isRootPost) {
+        const metadata = params.json_metadata;
+        const isTargetCategory = metadata && metadata.tags && (metadata.tags[0] === 'utopian-io' || metadata.tags[0] === 'test-category');
+        if (!isRootPost && isTargetCategory) {
           const notification = {
             type: 'reply',
             parent_permlink: params.parent_permlink,
@@ -121,7 +123,10 @@ const getNotifications = (ops) => {
             permlink: params.permlink,
             timestamp: Date.parse(op.timestamp) / 1000,
             block: op.block,
+            category: metadata.tags[0],
           };
+          console.log('UTOPIAN REPLY to redis, author = ' + params.author + ' / category = ' + metadata.tags[0]);
+          console.log(notification);
           notifications.push([params.parent_author, notification]);
         }
 
@@ -138,15 +143,21 @@ const getNotifications = (ops) => {
           .slice(0, 9); // Handle maximum 10 mentions per post
         if (mentions.length) {
           mentions.forEach(mention => {
-            const notification = {
-              type: 'mention',
-              is_root_post: isRootPost,
-              author: params.author,
-              permlink: params.permlink,
-              timestamp: Date.parse(op.timestamp) / 1000,
-              block: op.block,
-            };
-            notifications.push([mention, notification]);
+            if (isTargetCategory) {
+              const notification = {
+                type: 'mention',
+                is_root_post: isRootPost,
+                author: params.author,
+                permlink: params.permlink,
+                timestamp: Date.parse(op.timestamp) / 1000,
+                block: op.block,
+                category: metadata.tags[0],
+              };
+
+              console.log('UTOPIAN MENTION to redis, author = ' + params.author + ' / category = ' + metadata.tags[0]);
+              console.log(notification);
+              notifications.push([mention, notification]);
+            }
           });
         }
         break;
@@ -201,17 +212,20 @@ const getNotifications = (ops) => {
         break;
       }
       case 'vote': {
-        /** Find downvote */
-        if (params.weight < 0) {
-          const notification = {
-            type: 'vote',
-            voter: params.voter,
-            permlink: params.permlink,
-            weight: params.weight,
-            timestamp: Date.parse(op.timestamp) / 1000,
-            block: op.block,
-          };
-          // console.log('Downvote', JSON.stringify([params.author, notification]));
+        /** Find vote */
+        const voter = params.voter;
+        const notification = {
+          type: 'vote',
+          voter: voter,
+          permlink: params.permlink,
+          weight: params.weight,
+          timestamp: Date.parse(op.timestamp) / 1000,
+          block: op.block,
+        };
+        // console.log('Vote', JSON.stringify([params.author, notification]));
+        if (voter === 'utopian-io' || voter === 'utopian.tip' || voter === 'eastmael' || voter === 'east.autovote') {
+          console.log('UTOPIAN VOTE to redis; voter = ' + voter);
+          console.log(notification);
           notifications.push([params.author, notification]);
         }
         break;
@@ -270,7 +284,7 @@ const loadBlock = (blockNum) => {
       });
       redisOps.push(['set', 'last_block_num', blockNum]);
       redis.multi(redisOps).execAsync().then(() => {
-        console.log('Block loaded', blockNum, 'notification stored', notifications.length);
+        //console.log('Block loaded', blockNum, 'notification stored', notifications.length);
 
         /** Send push notification for logged peers */
         notifications.forEach((notification) => {
@@ -301,7 +315,7 @@ const loadBlock = (blockNum) => {
 
 const loadNextBlock = () => {
   redis.getAsync('last_block_num').then((res) => {
-    let nextBlockNum = (res === null)? 20000000 : parseInt(res) + 1;
+    let nextBlockNum = (res === null)? 22079900 : parseInt(res) + 1;
     utils.getGlobalProps().then(globalProps => {
       const lastIrreversibleBlockNum = globalProps.last_irreversible_block_num;
       if (lastIrreversibleBlockNum >= nextBlockNum) {
