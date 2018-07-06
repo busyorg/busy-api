@@ -5,10 +5,10 @@ const notificationTypes = require('./constants').notificationTypes;
 
 const expo = new Expo();
 
-const sendAllNotifications = (notifications) => {
+const sendAllNotifications = notifications => {
   // Collect notifications by user
   const userNotifications = {};
-  notifications.forEach((notification) => {
+  notifications.forEach(notification => {
     const user = notification[0];
     if (!userNotifications[user]) {
       userNotifications[user] = [];
@@ -16,28 +16,27 @@ const sendAllNotifications = (notifications) => {
     userNotifications[user].push(notification);
   });
 
-  Object.keys(userNotifications).forEach((user) => {
+  Object.keys(userNotifications).forEach(user => {
     const currentUserNotifications = userNotifications[user];
-    redis.smembersAsync(`tokens:${user}`)
-      .then(async (tokens) => {
-        if (tokens.length === 0) return;
+    redis.smembersAsync(`tokens:${user}`).then(async tokens => {
+      if (tokens.length === 0) return;
 
-        const messages = [];
-        currentUserNotifications.forEach((currentUserNotification) => {
-          tokens.forEach(token => messages.push(
-            getNotificationMessage(currentUserNotification, token),
-          ));
-        });
-        const chunks = expo.chunkPushNotifications(messages);
-        for (const chunk of chunks) {
-          try {
-            const resp = await expo.sendPushNotificationsAsync(chunk);
-            console.log('Expo chunk set', resp);
-          } catch (error) {
-            console.log('Error sending expo chunk', error);
-          }
-        }
+      const messages = [];
+      currentUserNotifications.forEach(currentUserNotification => {
+        tokens.forEach(token =>
+          messages.push(getNotificationMessage(currentUserNotification, token)),
+        );
       });
+      const chunks = expo.chunkPushNotifications(messages);
+      for (const chunk of chunks) {
+        try {
+          const resp = await expo.sendPushNotificationsAsync(chunk);
+          console.log('Expo chunk set', resp);
+        } catch (error) {
+          console.log('Error sending expo chunk', error);
+        }
+      }
+    });
   });
 };
 
@@ -49,9 +48,10 @@ const getNotificationMessage = (notification, token) => {
   switch (notification[1].type) {
     case notificationTypes.VOTE:
       message = {
-        body: data.weight > 0
-          ? `${data.voter} upvoted your post.`
-          : `${data.voter} downvoted your post.`,
+        body:
+          data.weight > 0
+            ? `${data.voter} upvoted your post.`
+            : `${data.voter} downvoted your post.`,
       };
       break;
 
@@ -75,7 +75,7 @@ const getNotificationMessage = (notification, token) => {
 
     case notificationTypes.REBLOG:
       message = {
-        body: `${data.account} reblogged your post.`
+        body: `${data.account} reblogged your post.`,
       };
       break;
 

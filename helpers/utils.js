@@ -5,11 +5,13 @@ bluebird.promisifyAll(client);
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-const getBlock = (blockNum) => client.sendAsync({ method: 'get_block', params: [blockNum] }, null);
+const getBlock = blockNum => client.sendAsync({ method: 'get_block', params: [blockNum] }, null);
 
-const getOpsInBlock = (blockNum, onlyVirtual = false) => client.sendAsync({ method: 'get_ops_in_block', params: [blockNum, onlyVirtual] }, null);
+const getOpsInBlock = (blockNum, onlyVirtual = false) =>
+  client.sendAsync({ method: 'get_ops_in_block', params: [blockNum, onlyVirtual] }, null);
 
-const getGlobalProps = () => client.sendAsync({ method: 'get_dynamic_global_properties', params: [] }, null);
+const getGlobalProps = () =>
+  client.sendAsync({ method: 'get_dynamic_global_properties', params: [] }, null);
 
 const mutliOpsInBlock = (start, limit, onlyVirtual = false) => {
   const request = [];
@@ -19,7 +21,7 @@ const mutliOpsInBlock = (start, limit, onlyVirtual = false) => {
   return client.sendBatchAsync(request, { timeout: 20000 });
 };
 
-const getBlockOps = (block) => {
+const getBlockOps = block => {
   const operations = [];
   block.transactions.forEach(transaction => {
     operations.push(...transaction.operations);
