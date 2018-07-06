@@ -316,8 +316,8 @@ js-tokens@^3.0.0:
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-3.0.2.tgz#9866df395102130e38f7f996bceb65443209c25b"
 
 lightrpc@^1.0.0-beta.4:
-  version "1.0.0-beta.5"
-  resolved "https://registry.yarnpkg.com/lightrpc/-/lightrpc-1.0.0-beta.5.tgz#a86dc648307be93d7cefc333930df522520cd68a"
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/lightrpc/-/lightrpc-1.0.1.tgz#1b03ebe4c33d6212a57e87f6096142e67495993e"
   dependencies:
     cross-fetch "^1.1.1"
 
