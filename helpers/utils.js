@@ -14,7 +14,7 @@ const getGlobalProps = () => client.sendAsync({ method: 'get_dynamic_global_prop
 const mutliOpsInBlock = (start, limit, onlyVirtual = false) => {
   const request = [];
   for (let i = start; i < start + limit; i++) {
-    request.push({ method: 'get_ops_in_block', params: [i, onlyVirtual]});
+    request.push({ method: 'get_ops_in_block', params: [i, onlyVirtual] });
   }
   return client.sendBatchAsync(request, { timeout: 20000 });
 };

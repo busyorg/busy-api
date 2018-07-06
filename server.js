@@ -3,13 +3,21 @@ const express = require('express');
 const SocketServer = require('ws').Server;
 const { Client } = require('busyjs');
 const sdk = require('sc2-sdk');
+const bodyParser = require('body-parser');
 const redis = require('./helpers/redis');
 const utils = require('./helpers/utils');
+const router = require('./routes');
+const notificationUtils = require('./helpers/expoNotifications');
 
 const sc2 = sdk.Initialize({ app: 'busy.app' });
 
+const app = express();
+app.use(bodyParser.json());
+app.use('/', router);
+
 const port = process.env.PORT || 4000;
-const server = express().listen(port, () => console.log(`Listening on ${port}`));
+const server = app.listen(port, () => console.log(`Listening on ${port}`));
+
 const wss = new SocketServer({ server });
 
 const steemdWsUrl = process.env.STEEMD_WS_URL || 'wss://rpc.buildteam.io';
@@ -274,7 +282,8 @@ const loadBlock = (blockNum) => {
             }
           });
         });
-
+        /** Send notifications to all devices */
+        notificationUtils.sendAllNotifications(notifications);
         loadNextBlock();
       }).catch(err => {
         console.error('Redis store notification multi failed', err);
