@@ -128,10 +128,12 @@ const getNotifications = (ops) => {
         /** Find mentions */
         const pattern = /(@[a-z][-\.a-z\d]+[a-z\d])/gi;
         const content = `${params.title} ${params.body}`;
-        const mentions = _.without(_.uniq(content.match(pattern))
-          .join('@')
-          .toLowerCase()
-          .split('@')
+        const mentions = _.without(
+          _.uniq((content.match(pattern) || [])
+            .join('@')
+            .toLowerCase()
+            .split('@')
+          )
           .filter(n => n), params.author)
           .slice(0, 9); // Handle maximum 10 mentions per post
         if (mentions.length) {
