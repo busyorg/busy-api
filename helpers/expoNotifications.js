@@ -89,7 +89,7 @@ const getNotificationMessage = (notification, token) => {
       };
   }
 
-  return { ...template, message };
+  return { ...template, ...message };
 };
 
 module.exports = {
