@@ -9,6 +9,8 @@ const utils = require('./helpers/utils');
 const router = require('./routes');
 const notificationUtils = require('./helpers/expoNotifications');
 
+const NOTIFICATION_EXPIRY = 5 * 24 * 3600;
+
 const sc2 = sdk.Initialize({ app: 'busy.app' });
 
 const app = express();
@@ -300,12 +302,14 @@ const loadBlock = blockNum => {
         /** Create redis operations array */
         const redisOps = [];
         notifications.forEach(notification => {
+          const key = `notifications:${notification[0]}`
           redisOps.push([
             'lpush',
-            `notifications:${notification[0]}`,
+            key,
             JSON.stringify(notification[1]),
           ]);
-          redisOps.push(['ltrim', `notifications:${notification[0]}`, 0, limit - 1]);
+          redisOps.push(['expire', key, NOTIFICATION_EXPIRY]);
+          redisOps.push(['ltrim', key, 0, limit - 1]);
         });
         redisOps.push(['set', 'last_block_num', blockNum]);
         redis
