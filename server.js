@@ -126,7 +126,7 @@ const getNotifications = ops => {
         const isRootPost = !params.parent_author;
 
         /** Find replies */
-        if (!isRootPost) {
+        if (!isRootPost && params.parent_author !== params.author) {
           const notification = {
             type: 'reply',
             parent_permlink: params.parent_permlink,
@@ -213,6 +213,9 @@ const getNotifications = ops => {
       }
       case 'account_witness_vote': {
         /** Find witness vote */
+        if (params.account === params.witness) {
+          break;
+        }
         const notification = {
           type: 'witness_vote',
           account: params.account,
@@ -226,6 +229,7 @@ const getNotifications = ops => {
       }
       case 'vote': {
         /** Find downvote */
+        // notification of downvoting self can be useful, so let it be
         if (params.weight < 0) {
           const notification = {
             type: 'vote',
